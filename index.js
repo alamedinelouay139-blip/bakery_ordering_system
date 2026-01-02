@@ -1,6 +1,7 @@
 import express from "express";
 import mysql from "mysql";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 const app = express();
 app.use(express.json());
@@ -100,6 +101,86 @@ app.post("/auth/login", (req, res) => {
 
       // 6) success
       res.status(200).json({ message: "Login successful" });
+    }
+  );
+});
+//kif lzm faker bas bdi a3ml forgetpassword
+//awal shi bdi eshtghl 3a email fa bkhdu const {email}=req.body
+//ba3da ba3ml valid iza fade aw keteb validation is emty al errorcoe 400
+//baeda bshaghel l query 
+//ba3da iza wajad al email yaene result===0 b2lo     message: "If the email exists, a reset token was generated"
+//krml ma ykteshf al hacker al emails al mawjudi wl mena mawjudi 
+//hydi esma prevent email enumeration
+//ba3da bas jib al email ba3mlo hash
+//ana bedi esta3ml token hata et2akad huwi nafs al shakhes 
+
+//bsta3ml token hata et2akad nfs shkhs bala ma shuf al password
+app.post("/auth/forgot-password", (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  db.query(
+    "SELECT id FROM users WHERE email = ?",
+    [email],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      if (results.length === 0) {
+        return res.status(200).json({
+          message: "If the email exists, a reset token was generated"
+        });
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      db.query(
+        "UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE email = ?",
+        [token, expires, email],
+        () => {
+          res.status(200).json({
+            message: "Reset token generated",
+            resetToken: token
+          });
+        }
+      );
+    }
+  );
+});
+// Reset password
+app.post("/auth/reset-password", async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Token and new password are required" });
+  }
+
+  db.query(
+    "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > NOW()",
+    [token],
+    async (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      if (results.length === 0) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      db.query(
+        "UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
+        [hashedPassword, results[0].id],
+        () => {
+          res.status(200).json({ message: "Password reset successful" });
+        }
+      );
     }
   );
 });
