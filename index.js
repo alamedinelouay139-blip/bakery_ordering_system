@@ -28,17 +28,18 @@ app.post("/auth/signup", async (req, res) => {
   db.query(
     "SELECT id FROM users WHERE email = ?",
     [email],
-    async (err, results) => {
+    async (err, results) => {//hon ha yntor ya ema ha ymhsi l7al aw ha yaetini error
       if (err) {
         return res.status(500).json({ message: "Database error" });
       }
 
-      if (results.length > 0) {
+      if (results.length > 0) {//iza la2ena nafs a email 409 ya3ni ta3arod
         return res.status(409).json({ message: "Email already exists" });
       }
 
       // 3) hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);//hon am yaeml hash 10 marat ya3ni malyon tajrube hata ykshof al password
+
 
       // 4) insert user
       db.query(
@@ -57,6 +58,51 @@ app.post("/auth/signup", async (req, res) => {
   );
 });
 
+//yali bdi faker fi bl login
+//et2akd enu email and pass mawjudin 
+//aeml search 3an al user bl (email);
+//iza al use not found error
+//iza mawjud brja3 baeml hash w b2arna bli abla bdi esta3ml compare mn crypt
+//bdi erja3 aeml iza al compartion zaabt w iza laa error
+//iza nej7 w klshi tmmm bred response
+// Login route
+app.post("/auth/login", (req, res) => {
+  const { email, password } = req.body;
+
+  // 1) validation
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  // 2) find user by email
+  db.query(
+    "SELECT * FROM users WHERE email = ?",
+    [email],
+    async (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      // 3) user not found
+      if (results.length === 0) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      const user = results[0];
+
+      // 4) compare password with hash
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+
+      // 5) password incorrect
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // 6) success
+      res.status(200).json({ message: "Login successful" });
+    }
+  );
+});
 
 db.connect((err) => {
   if (err) {
