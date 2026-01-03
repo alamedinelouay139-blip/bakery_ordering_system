@@ -10,14 +10,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Bakery backend is running");
 });
-const db = mysql.createConnection({
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-  port: process.env.MYSQL_PORT,
-  ssl: { rejectUnauthorized: false }
-});
+const db = mysql.createConnection(process.env.MYSQL_URL);
 
 
 // Signup route
