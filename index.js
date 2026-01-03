@@ -2,7 +2,8 @@ import express from "express";
 import mysql from "mysql";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-
+import dotenv from "dotenv";
+dotenv.config();
 const app = express();
 app.use(express.json());
 
@@ -10,10 +11,11 @@ app.get("/", (req, res) => {
   res.send("Bakery backend is running");
 });
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "bakery_db"
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQL_PORT
 });
 
 // Signup route
