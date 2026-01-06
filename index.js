@@ -1,5 +1,5 @@
 import express from "express";
-import mysql from "mysql";
+import mysql from "mysql2";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import dotenv from "dotenv";
