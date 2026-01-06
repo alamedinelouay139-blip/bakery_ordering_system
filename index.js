@@ -58,7 +58,7 @@ app.post("/auth/signup", async (req, res) => {
 
       // 4) insert user
       db.query(
-        "INSERT INTO users (email, password_hash) VALUES (?, ?)",
+        "INSERT INTO users (email, password_hash,created_at) VALUES (?, ?,NOW())",
         [email, hashedPassword],
         (err) => {
           if (err) {
