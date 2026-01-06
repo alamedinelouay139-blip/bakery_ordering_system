@@ -10,7 +10,24 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Bakery backend is running");
 });
-const db = mysql.createConnection(process.env.MYSQL_URL);
+
+// Debug: Log environment variables
+console.log("=== RAILWAY ENV DEBUG ===");
+console.log("MYSQL_HOST:", process.env.MYSQL_HOST);
+console.log("MYSQL_USER:", process.env.MYSQL_USER);
+console.log("MYSQL_DATABASE:", process.env.MYSQL_DATABASE);
+console.log("MYSQL_PORT:", process.env.MYSQL_PORT);
+console.log("MYSQL_PASSWORD:", process.env.MYSQL_PASSWORD ? "***SET***" : "UNDEFINED");
+console.log("========================");
+
+const db = mysql.createConnection({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQL_PORT,
+  ssl: { rejectUnauthorized: false }
+});
 
 
 // Signup route

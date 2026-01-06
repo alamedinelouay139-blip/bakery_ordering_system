@@ -1,0 +1,226 @@
+1. What the project is
+
+We are deploying a Node.js backend (bakery_ordering_system) that connects to a MySQL database and runs online on Railway instead of locally.
+
+Backend: Node.js + mysql library
+
+Database: MySQL (Railway managed service)
+
+Hosting: Railway (cloud container environment)
+
+2. What worked locally (before deployment)
+
+Locally, the backend worked because:
+
+MySQL was running on the same machine
+
+The host was localhost or 127.0.0.1
+
+Environment variables were loaded from a local .env file using dotenv
+
+Example (local mindset):
+
+host: localhost
+
+
+This only works locally, not in the cloud.
+
+Source:
+https://nodejs.org/en/learn/getting-started/environment-variables
+
+https://www.npmjs.com/package/dotenv
+
+3. What changed when we moved to Railway
+
+When deploying to Railway:
+
+The backend runs inside a container
+
+MySQL runs in a separate service
+
+localhost does not point to MySQL
+
+Railway generates dynamic connection values:
+
+Host
+
+User
+
+Password
+
+Database name
+
+Port
+
+These values must be injected as environment variables.
+
+Source:
+https://docs.railway.app/guides/databases
+
+https://docs.railway.app/deploy/environment-variables
+
+4. The backend code (what we already had correct)
+
+Your backend code was already written the correct way:
+
+const db = mysql.createConnection({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQL_PORT,
+  ssl: { rejectUnauthorized: true }
+});
+
+
+This code expects environment variables.
+It does not define them.
+
+That means:
+
+If variables are missing or wrong → connection fails
+
+The code itself was not the problem
+
+Source:
+https://www.npmjs.com/package/mysql
+
+https://dev.mysql.com/doc/
+
+5. The error we kept seeing (and what it really meant)
+
+Main error in logs:
+
+ECONNREFUSED
+127.0.0.1
+::1
+port 3306
+
+What this means
+
+Node.js tried to connect to localhost
+
+Railway containers do not have MySQL on localhost
+
+So the connection was rejected
+
+This happens only when MYSQL_HOST is missing or empty.
+
+Source:
+https://nodejs.org/api/errors.html
+
+https://stackoverflow.com/questions/17690803/node-js-mysql-error-connection-refused
+
+6. Why “MYSQL_HOST” didn’t show suggestions in VS Code
+
+This is very important:
+
+MYSQL_HOST is not a variable in your code
+
+It is not a JavaScript symbol
+
+It is not a function or constant
+
+VS Code cannot auto-suggest environment variables
+
+So:
+
+No autocomplete
+
+No “Add reference” in VS Code
+
+No error in the editor
+
+Environment variables are resolved only at runtime, not by the editor.
+
+Source:
+https://code.visualstudio.com/docs/editor/intellisense
+
+https://nodejs.org/en/learn/getting-started/environment-variables
+
+7. The real mistake (why variables were not done until now)
+What was missing
+
+We did not correctly configure Railway Variables at the beginning.
+
+Specifically:
+
+Variables existed in the code
+
+But Railway did not have values injected
+
+Or values were typed manually instead of linked as references
+
+Because of that:
+
+process.env.MYSQL_HOST was undefined
+
+Node.js defaulted to localhost
+
+Connection failed every time
+
+8. Why tables and database content were NOT the issue
+
+Important clarification:
+
+❌ This error has nothing to do with:
+
+Missing tables
+
+Empty database
+
+Not creating schemas yet
+
+A MySQL server accepts connections even if no tables exist.
+
+The failure happened before authentication, at the network level.
+
+Source:
+https://dev.mysql.com/doc/refman/8.0/en/connection-problems.html
+
+9. Why GitHub push was NOT required
+
+Environment Variables live only on Railway
+
+They are not part of the code
+
+Changing variables does not change GitHub files
+
+Therefore:
+
+❌ No commit needed
+
+❌ No push needed
+
+✅ Only Redeploy on Railway
+
+Source:
+https://docs.railway.app/deploy/environment-variables
+
+10. Current status (where we are now)
+
+Backend code ✅ correct
+
+MySQL service ✅ online
+
+Problem identified ✅ variables not injected
+
+Solution path ✅ use Railway “Add Reference” for all MySQL variables
+
+11. Final conclusion (short)
+
+The backend crashed not because of MySQL, not because of tables, and not because of code.
+
+It crashed because:
+
+The backend had no access to Railway’s MySQL connection variables.
+
+Once variables are correctly linked using Railway References, the connection will succeed.
+
+If you want next:
+
+I can write this as final deployment report
+
+Or as oral explanation for your doctor
+
+Or we move to creating database & tables safely
